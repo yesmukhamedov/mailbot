@@ -7,7 +7,13 @@ const path = require('node:path');
 const { parseCsv, detectDelimiter } = require('../src/csv');
 const { parseFrontMatter, render, renderMessage, usedVariables } = require('../src/template');
 const { parseArgs, parseSince } = require('../src/args');
-const { addressList, isValidAddress, normalizeOutgoing } = require('../src/message');
+const {
+  addressList,
+  isValidAddress,
+  attachmentList,
+  attachmentsSize,
+  normalizeOutgoing,
+} = require('../src/message');
 const { pickEmailColumn, loadSent, appendJournal, journalPathFor } = require('../src/campaign');
 const { resolveAccount } = require('../src/config');
 
@@ -102,6 +108,32 @@ test('Адреса: разбор списка и проверка', () => {
 test('Письмо: без получателя и с битым адресом не собирается', () => {
   assert.throws(() => normalizeOutgoing({ subject: 'x' }), /получател/);
   assert.throws(() => normalizeOutgoing({ to: 'кривой', subject: 'x' }), /Неверные адреса/);
+});
+
+test('Вложения: пути разбираются, размер считается, отсутствующий файл виден сразу', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mailbot-'));
+  const one = path.join(dir, 'отзыв.docx');
+  const two = path.join(dir, 'том.pdf');
+  fs.writeFileSync(one, 'a'.repeat(10));
+  fs.writeFileSync(two, 'b'.repeat(90));
+
+  const list = attachmentList(`${one},${two}`);
+  assert.deepStrictEqual(
+    list.map((a) => a.name),
+    ['отзыв.docx', 'том.pdf']
+  );
+  assert.strictEqual(attachmentsSize(list), 100);
+
+  assert.deepStrictEqual(attachmentList(''), []);
+  assert.throws(() => attachmentList(path.join(dir, 'нет.pdf')), /не найден/);
+  assert.throws(() => attachmentList(dir), /не является файлом/);
+
+  const msg = normalizeOutgoing({ to: 'a@b.kz', subject: 'x', attachments: [one] });
+  assert.strictEqual(msg.attachments.length, 1);
+  // Письмо нормализуется дважды — в команде и в транспорте; разобранный список
+  // должен пройти второй раз без изменений, а не превратиться в «[object Object]».
+  assert.deepStrictEqual(attachmentList(msg.attachments), msg.attachments);
+  assert.deepStrictEqual(normalizeOutgoing({ to: 'a@b.kz' }).attachments, []);
 });
 
 test('Рассылка: колонка с адресом ищется по разным названиям', () => {

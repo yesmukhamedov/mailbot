@@ -35,7 +35,7 @@ class SmtpImapTransport {
       fetch: Boolean(this.account.imap && this.account.imap.host),
       search: true,
       html: false, // точка расширения: nodemailer умеет, ядро пока шлёт текст
-      attachments: false, // точка расширения
+      attachments: true,
     };
   }
 
@@ -71,11 +71,14 @@ class SmtpImapTransport {
 
     if (dryRun) {
       // Соединение уже проверено в open(); показываем, что именно ушло бы.
+      const files = m.attachments.length
+        ? `Attachments: ${m.attachments.map((a) => a.name).join(', ')}\n`
+        : '';
       return {
         id: null,
         dryRun: true,
         preview: `From: ${this.account.address}\nTo: ${m.to.join(', ')}\n` +
-          `Subject: ${m.subject}\n\n${m.text}`,
+          `Subject: ${m.subject}\n${files}\n${m.text}`,
       };
     }
 
@@ -86,6 +89,9 @@ class SmtpImapTransport {
       bcc: m.bcc.join(', ') || undefined,
       subject: m.subject,
       text: m.text,
+      attachments: m.attachments.length
+        ? m.attachments.map((a) => ({ filename: a.name, path: a.path }))
+        : undefined,
     });
     return { id: info.messageId, accepted: info.accepted || [], rejected: info.rejected || [] };
   }

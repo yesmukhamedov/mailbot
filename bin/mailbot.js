@@ -20,6 +20,7 @@ const BOOLEANS = [
   'unread',
   'full',
   'table',
+  'onedrive',
   'help',
   'version',
 ];
@@ -37,6 +38,7 @@ const USAGE = `mailbot — почта из терминала: нескольк�
 
 Отправка
   mailbot send --from work --to a@b.kz,c@d.kz --subject "Тема" --body "Текст" [--dry-run]
+               [--body-file письмо.txt] [--attach путь1,путь2] [--onedrive]
 
 Чтение
   mailbot read [--from имя|all] [--folder inbox|sent|drafts|junk|archive]
