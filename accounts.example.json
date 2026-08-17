@@ -1,0 +1,32 @@
+{
+  "defaultAccount": "gmail",
+  "accounts": {
+    "gmail": {
+      "type": "smtp-imap",
+      "preset": "gmail",
+      "address": "me@gmail.com",
+      "passEnv": "MAILBOT_GMAIL_PASS"
+    },
+    "work": {
+      "type": "outlook-web",
+      "preset": "outlook",
+      "address": "me@university.edu",
+      "profile": "profiles/work"
+    },
+    "personal": {
+      "type": "outlook-web",
+      "preset": "outlook-personal",
+      "address": "me@outlook.com",
+      "profile": "profiles/personal"
+    },
+    "other": {
+      "type": "smtp-imap",
+      "preset": "custom",
+      "address": "me@example.org",
+      "passEnv": "MAILBOT_OTHER_PASS",
+      "smtp": { "host": "smtp.example.org", "port": 465, "secure": true },
+      "imap": { "host": "imap.example.org", "port": 993, "secure": true },
+      "limits": { "perDay": 300, "perMinute": 15 }
+    }
+  }
+}

@@ -1,17 +1,32 @@
 {
   "name": "mailbot",
-  "version": "1.0.0",
-  "description": "Чтение и отправка почты через веб-Outlook на Playwright — обход тенантов, где Microsoft Graph требует admin consent",
+  "version": "2.0.0",
+  "description": "Почта из терминала: несколько ящиков, рассылка по списку, выгрузка входящих для анализа. SMTP/IMAP там, где можно, браузер — там, где провайдер закрыл протоколы",
   "license": "MIT",
+  "bin": {
+    "mailbot": "bin/mailbot.js"
+  },
   "engines": {
     "node": ">=20.6"
   },
   "scripts": {
-    "login": "node login.js",
-    "read": "node read.js",
-    "send": "node send.js"
+    "test": "node --test \"test/*.test.js\"",
+    "mailbot": "node bin/mailbot.js"
   },
+  "keywords": [
+    "email",
+    "smtp",
+    "imap",
+    "outlook",
+    "gmail",
+    "mail-merge",
+    "playwright",
+    "cli"
+  ],
   "dependencies": {
+    "imapflow": "^1.7.1",
+    "mailparser": "^3.9.15",
+    "nodemailer": "^9.0.5",
     "playwright-core": "^1.62.1"
   }
 }
