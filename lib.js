@@ -15,6 +15,10 @@ const MAIL_URL = process.env.MAILBOT_MAIL_URL || 'https://outlook.office.com/mai
 // Куда send.js кладёт скриншот черновика.
 const SCREENSHOT = process.env.MAILBOT_SCREENSHOT || path.join(__dirname, 'draft.png');
 
+// Microsoft постепенно переводит веб-Outlook с outlook.office.com на outlook.cloud.microsoft,
+// причём редирект срабатывает не всегда. Считаем почтой любой из известных доменов.
+const MAIL_HOST_RE = /^https:\/\/outlook\.(office\.com|cloud\.microsoft|office365\.com|live\.com)\/mail/;
+
 async function open({ headless = true } = {}) {
   const ctx = await chromium.launchPersistentContext(PROFILE, {
     channel: 'chrome',
@@ -30,7 +34,7 @@ async function open({ headless = true } = {}) {
 // Во время входа страница часто редиректит, поэтому любые ошибки evaluate = «ещё не вошли».
 async function isSignedIn(page) {
   try {
-    if (page.isClosed() || !page.url().includes('outlook.office.com/mail')) return false;
+    if (page.isClosed() || !MAIL_HOST_RE.test(page.url())) return false;
     return await page.evaluate(
       () =>
         document.querySelectorAll('[role="option"]').length > 0 ||
@@ -50,4 +54,16 @@ async function gotoMail(page) {
   return false;
 }
 
-module.exports = { open, isSignedIn, gotoMail, PROFILE, MAIL_URL, SCREENSHOT };
+// Строит адрес внутри почты на том домене, куда нас в итоге пустили,
+// иначе переход на другой домен снова ловит редирект.
+function mailUrl(page, suffix) {
+  let origin;
+  try {
+    origin = new URL(page.url()).origin;
+  } catch {
+    origin = new URL(MAIL_URL).origin;
+  }
+  return origin + '/mail/' + suffix;
+}
+
+module.exports = { open, isSignedIn, gotoMail, mailUrl, PROFILE, MAIL_URL, SCREENSHOT, MAIL_HOST_RE };

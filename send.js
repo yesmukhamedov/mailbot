@@ -1,7 +1,7 @@
 // Фоновая отправка письма:
 //   node send.js --to a@b.com --subject "Тема" --body "Текст" [--dry-run]
 // --dry-run заполняет письмо и делает скриншот draft.png, но НЕ отправляет.
-const { open, gotoMail, SCREENSHOT } = require('./lib');
+const { open, gotoMail, mailUrl, SCREENSHOT } = require('./lib');
 
 function arg(name, def = '') {
   const i = process.argv.indexOf('--' + name);
@@ -27,7 +27,7 @@ if (!to) {
     }
 
     const url =
-      'https://outlook.office.com/mail/deeplink/compose?to=' +
+      mailUrl(page, 'deeplink/compose?to=') +
       encodeURIComponent(to) +
       '&subject=' +
       encodeURIComponent(subject) +

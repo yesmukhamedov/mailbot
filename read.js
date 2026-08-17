@@ -1,6 +1,6 @@
 // Фоновое чтение почты: node read.js [сколько писем] [папка]
 // папка: inbox (по умолчанию), sentitems, drafts, archive, junkemail
-const { open, gotoMail } = require('./lib');
+const { open, gotoMail, mailUrl } = require('./lib');
 
 const LIMIT = parseInt(process.argv[2] || '10', 10);
 const FOLDER = process.argv[3] || 'inbox';
@@ -14,7 +14,7 @@ const FOLDER = process.argv[3] || 'inbox';
       return;
     }
     if (FOLDER !== 'inbox') {
-      await page.goto('https://outlook.office.com/mail/' + FOLDER, {
+      await page.goto(mailUrl(page, FOLDER), {
         waitUntil: 'domcontentloaded',
         timeout: 60000,
       });
