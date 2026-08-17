@@ -1,0 +1,17 @@
+{
+  "name": "mailbot",
+  "version": "1.0.0",
+  "description": "Чтение и отправка почты через веб-Outlook на Playwright — обход тенантов, где Microsoft Graph требует admin consent",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "login": "node login.js",
+    "read": "node read.js",
+    "send": "node send.js"
+  },
+  "dependencies": {
+    "playwright-core": "^1.62.1"
+  }
+}
