@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const { getPreset, DEFAULT_LIMITS } = require('./presets');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -29,6 +30,32 @@ function readConfig() {
   }
   if (!raw.accounts || typeof raw.accounts !== 'object') raw.accounts = {};
   return raw;
+}
+
+// Хранилище секретов KeePassXC. Пока база под ключ-файлом; когда владелец поставит
+// мастер-пароль, ключ-файл исчезнет — тогда пароль базы берётся из MAILBOT_KDBX_PASSWORD.
+const VAULT = {
+  cli: process.env.KEEPASSXC_CLI || 'E:\\apps\\keepassxc\\keepassxc-cli.exe',
+  db: process.env.MAILBOT_KDBX || 'E:\\vault\\secrets.kdbx',
+  keyfile: process.env.MAILBOT_KDBX_KEYFILE || 'E:\\vault\\_plaintext-TODO\\_assembly-keyfile.key',
+};
+
+// Пароль из записи хранилища (passVault — путь записи, напр. «Инструменты/mailbot-work-gmail»).
+// Ошибку не бросаем: без пароля ящик просто окажется «НЕТ ПАРОЛЯ», как и с пустым passEnv.
+function readVault(entryPath) {
+  const args = ['show', '-s', '-a', 'password'];
+  let input;
+  if (fs.existsSync(VAULT.keyfile)) {
+    args.push('--no-password', '--key-file', VAULT.keyfile);
+  } else if (process.env.MAILBOT_KDBX_PASSWORD) {
+    input = process.env.MAILBOT_KDBX_PASSWORD + '\n';
+  } else {
+    return undefined;
+  }
+  args.push(VAULT.db, entryPath);
+  const res = spawnSync(VAULT.cli, args, { input, encoding: 'utf8', windowsHide: true });
+  if (res.status !== 0) return undefined;
+  return res.stdout.trim() || undefined;
 }
 
 function writeConfig(cfg) {
@@ -63,6 +90,8 @@ function resolveAccount(name, entry) {
     acc.user = entry.user || entry.address;
     acc.passEnv = entry.passEnv || null;
     acc.pass = acc.passEnv ? process.env[acc.passEnv] : undefined;
+    acc.passVault = entry.passVault || null;
+    if (!acc.pass && acc.passVault) acc.pass = readVault(acc.passVault);
     // Отсутствие пароля не считаем фатальным здесь: `mailbot account list` должен
     // показывать ящик и без секрета, а ругаться будут команды, которым он нужен.
   } else if (type === 'outlook-web') {
